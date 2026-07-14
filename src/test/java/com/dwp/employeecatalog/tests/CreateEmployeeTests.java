@@ -1,7 +1,5 @@
 package com.dwp.employeecatalog.tests;
 
-import com.dwp.employeecatalog.model.Address;
-import com.dwp.employeecatalog.model.ContactInfo;
 import com.dwp.employeecatalog.model.Employee;
 import com.dwp.employeecatalog.util.TestDataFactory;
 import io.restassured.response.Response;
@@ -33,12 +31,12 @@ import static org.hamcrest.Matchers.startsWith;
  * echoed back), and that invalid requests are rejected — duplicate email (400),
  * missing required fields, and an empty body.</p>
  *
- * <p>Several negative tests are {@link org.junit.jupiter.api.Disabled} against
- * the live host because the service crashes on invalid input (see FINDINGS #5/#8);
- * they are retained to run against a fixed or local API, and use
- * {@code createEmployeeNoRetry} so a single bad request can't be retried into a
- * sustained outage. Employees created here are removed in {@link #cleanUp()} so
- * runs stay independent and the shared catalog stays tidy.</p>
+ * <p>One negative case (an empty {@code {}} body) stays
+ * {@link org.junit.jupiter.api.Disabled} because it still crashes the shared host
+ * (FINDINGS #5/#8) and uses {@code createEmployeeNoRetry} so the crash isn't
+ * retried; it is retained to run against a fixed or local API. Employees created
+ * here are removed in {@link #cleanUp()} so runs stay independent and the shared
+ * catalog stays tidy.</p>
  */
 @DisplayName("POST /employees - create employee")
 class CreateEmployeeTests extends BaseTest {
@@ -66,6 +64,20 @@ class CreateEmployeeTests extends BaseTest {
         } catch (RuntimeException e) {
             return Optional.empty();
         }
+    }
+
+    /**
+     * Asserts a create was rejected as a validation error for the given missing
+     * field. The API <i>currently</i> returns 500, but the correct status is 400
+     * (FINDINGS #13) — {@code oneOf(400, 500)} accepts both so the test survives a
+     * future fix, while still failing on any other status (e.g. 201/401/404).
+     */
+    private static void assertRejectedAsValidationError(Response response, String field) {
+        assertThat("missing " + field + " must be rejected as a validation error",
+                response.statusCode(), is(oneOf(400, 500)));
+        assertThat("error should name the missing required field (" + field + ")",
+                response.jsonPath().getString("error"),
+                allOf(containsString(field), containsString("required")));
     }
 
     @Test
@@ -141,23 +153,12 @@ class CreateEmployeeTests extends BaseTest {
         Employee employee = Employee.builder()
                 .firstName("NoLastName")
                 .dateOfBirth("1990-01-01")
-                .contactInfo(new ContactInfo(
-                        TestDataFactory.uniqueEmail("no", "last"), "", new Address("", "", "")))
+                .contactInfo(TestDataFactory.blankContactInfo(TestDataFactory.uniqueEmail("no", "last")))
                 .build();
 
         Response response = api.createEmployee(token, employee);
 
-        // Must be rejected as a validation error. The API *currently* returns 500,
-        // but the correct status is 400 (FINDINGS #13) — oneOf(400, 500) accepts
-        // both so the test survives a future fix, while still failing if the
-        // endpoint regresses to some other status (e.g. 201/401/404).
-        assertThat("missing lastName must be rejected as a validation error",
-                response.statusCode(), is(oneOf(400, 500)));
-        assertThat("error should name the missing required field (lastName)",
-                response.jsonPath().getString("error"),
-                allOf(containsString("lastName"), containsString("required")));
-
-        // Guard against silent success: if it somehow created, clean it up.
+        assertRejectedAsValidationError(response, "lastName");
         extractEmployeeId(response).ifPresent(createdIds::add);
     }
 
@@ -169,17 +170,12 @@ class CreateEmployeeTests extends BaseTest {
                 .firstName("NoEmail")
                 .lastName("Person")
                 .dateOfBirth("1990-01-01")
-                .contactInfo(new ContactInfo(null, "", new Address("", "", "")))
+                .contactInfo(TestDataFactory.blankContactInfo(null))
                 .build();
 
         Response response = api.createEmployee(token, employee);
 
-        // Currently 500, correct is 400 (FINDINGS #13) — accept either.
-        assertThat("missing email must be rejected as a validation error",
-                response.statusCode(), is(oneOf(400, 500)));
-        assertThat("error should name the missing required field (email)",
-                response.jsonPath().getString("error"),
-                allOf(containsString("email"), containsString("required")));
+        assertRejectedAsValidationError(response, "email");
         extractEmployeeId(response).ifPresent(createdIds::add);
     }
 
@@ -192,8 +188,7 @@ class CreateEmployeeTests extends BaseTest {
                 .firstName("")
                 .lastName("Person")
                 .dateOfBirth("1990-01-01")
-                .contactInfo(new ContactInfo(
-                        TestDataFactory.uniqueEmail("empty", "first"), "", new Address("", "", "")))
+                .contactInfo(TestDataFactory.blankContactInfo(TestDataFactory.uniqueEmail("empty", "first")))
                 .build();
 
         Response response = api.createEmployee(token, employee);

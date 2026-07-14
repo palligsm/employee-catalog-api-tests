@@ -63,11 +63,21 @@ public final class TestDataFactory {
                 .firstName(firstName)
                 .lastName(lastName)
                 .dateOfBirth("1990-01-01")
-                .contactInfo(new ContactInfo(
-                        uniqueEmail(firstName, lastName),
-                        "",                        // blank phone
-                        new Address("", "", "")))  // blank street/town/postCode
+                .contactInfo(blankContactInfo(uniqueEmail(firstName, lastName)))
                 .build();
+    }
+
+    /**
+     * A {@link ContactInfo} with the given email and the optional fields
+     * (phone / address) present but <b>blank ("")</b>.
+     *
+     * <p>The live host crashes when those nested keys are <i>omitted</i>
+     * (FINDINGS #8) but accepts them present-but-empty, so this is the contact
+     * block used for minimal and negative-create payloads. Pass {@code null} for
+     * the email to build a body that is missing the required email.</p>
+     */
+    public static ContactInfo blankContactInfo(String email) {
+        return new ContactInfo(email, "", new Address("", "", ""));
     }
 
     /** Unique, clearly-synthetic email address. */
