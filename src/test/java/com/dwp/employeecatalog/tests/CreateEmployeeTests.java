@@ -144,6 +144,30 @@ class CreateEmployeeTests extends BaseTest {
                 allOf(containsString(dupEmail), containsString("already in use")));
     }
 
+    @Test
+    @DisplayName("duplicate first name is allowed (names are not a unique key) - 201")
+    void duplicateFirstName_isAllowed() {
+        // Create a first employee, then a second sharing the SAME first name but a
+        // different (unique) email. Only email is unique — a shared first name is
+        // valid, so this must succeed with 201, not a duplicate-key 400.
+        Employee first = TestDataFactory.validEmployee();
+        String sharedFirstName = first.getFirstName();
+        Response created = api.createEmployee(token, first);
+        assertThat("precondition: first create succeeds", created.statusCode(), is(201));
+        createdIds.add(created.jsonPath().getString("employeeId"));
+
+        Employee second = TestDataFactory.validEmployee(); // fresh unique email
+        second.setFirstName(sharedFirstName);
+
+        Response response = api.createEmployee(token, second);
+
+        assertThat("a shared first name must be allowed (first name is not unique)",
+                response.statusCode(), is(201));
+        assertThat("the second employee keeps the shared first name",
+                response.jsonPath().getString("firstName"), equalTo(sharedFirstName));
+        createdIds.add(response.jsonPath().getString("employeeId"));
+    }
+
     // --- Name-field validation: empty firstName and missing lastName, kept together ---
 
     @Test
