@@ -73,5 +73,7 @@ class UpdateEmployeeTests extends BaseTest {
 
         assertThat("updating a missing employee should yield 404",
                 response.statusCode(), is(404));
+        assertThat("404 body should carry the 'Employee not found' message",
+                response.jsonPath().getString("message"), equalTo("Employee not found"));
     }
 }

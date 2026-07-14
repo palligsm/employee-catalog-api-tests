@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 /**
@@ -40,5 +41,7 @@ class DeleteEmployeeTests extends BaseTest {
 
         assertThat("deleting a missing employee should yield 404",
                 response.statusCode(), is(404));
+        assertThat("404 body should carry the 'Employee not found' message",
+                response.jsonPath().getString("message"), equalTo("Employee not found"));
     }
 }
