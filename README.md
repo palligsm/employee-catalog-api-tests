@@ -143,6 +143,20 @@ mvn test -Dtest='Create*'                          # pattern match
 After a run, JUnit results are written to `target/surefire-reports/` (one XML +
 text file per test class).
 
+### Run history (last 10 runs)
+A `TestExecutionListener` (`util/TestRunHistoryListener`) appends a **timestamped
+one-line summary** of every run to `test-history/test-results.log`, keeping only
+the **most recent 10 runs**. It runs automatically on every `mvn test` — no
+wiring needed — and lives outside `target/`, so `mvn clean` doesn't wipe it. Example:
+
+```
+2026-07-14 15:52:49 | duration=   3.5s | total= 2  passed= 2  failed= 0  skipped= 0 | RESULT=PASS
+```
+
+The `skipped` count includes `@Disabled` tests and any aborted on a host outage,
+so it's a handy record of how the suite behaved against the flaky free-tier host
+over its last few runs. The file is git-ignored (it's a local artifact).
+
 ---
 
 ## 4. Configuration

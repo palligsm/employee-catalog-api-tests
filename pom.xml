@@ -22,6 +22,7 @@
         <!-- Dependency versions -->
         <rest-assured.version>5.5.0</rest-assured.version>
         <junit.version>5.11.3</junit.version>
+        <junit-platform.version>1.11.3</junit-platform.version>
         <hamcrest.version>3.0</hamcrest.version>
         <jackson.version>2.18.2</jackson.version>
         <datafaker.version>2.4.2</datafaker.version>
@@ -51,6 +52,14 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Platform launcher API — needed to compile the TestExecutionListener
+             that writes the rolling test-run history log. -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <version>${junit-platform.version}</version>
             <scope>test</scope>
         </dependency>
 
