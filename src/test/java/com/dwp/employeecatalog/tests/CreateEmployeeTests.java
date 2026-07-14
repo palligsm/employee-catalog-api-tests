@@ -144,6 +144,30 @@ class CreateEmployeeTests extends BaseTest {
                 allOf(containsString(dupEmail), containsString("already in use")));
     }
 
+    // --- Name-field validation: empty firstName and missing lastName, kept together ---
+
+    @Test
+    @DisplayName("empty-string firstName is rejected with 400 and a min-length message")
+    void emptyFirstName_isRejectedWith400() {
+        // Empty firstName with an otherwise valid body (blank optional contact fields).
+        // This is a case the API handles correctly: a clean 400 with a clear message.
+        Employee employee = Employee.builder()
+                .firstName("")
+                .lastName("Person")
+                .dateOfBirth("1990-01-01")
+                .contactInfo(TestDataFactory.blankContactInfo(TestDataFactory.uniqueEmail("empty", "first")))
+                .build();
+
+        Response response = api.createEmployee(token, employee);
+
+        assertThat("an empty first name must be rejected", response.statusCode(), is(400));
+        assertThat("body should explain the minimum-length rule",
+                response.jsonPath().getString("message"),
+                equalTo("First name must be at least 2 characters long."));
+
+        extractEmployeeId(response).ifPresent(createdIds::add);
+    }
+
     @Test
     @DisplayName("missing required field (lastName) is rejected, not 201")
     void missingRequiredField_isRejected() {
@@ -176,28 +200,6 @@ class CreateEmployeeTests extends BaseTest {
         Response response = api.createEmployee(token, employee);
 
         assertRejectedAsValidationError(response, "email");
-        extractEmployeeId(response).ifPresent(createdIds::add);
-    }
-
-    @Test
-    @DisplayName("empty-string firstName is rejected with 400 and a min-length message")
-    void emptyFirstName_isRejectedWith400() {
-        // Empty firstName with an otherwise valid body (blank optional contact fields).
-        // This is a case the API handles correctly: a clean 400 with a clear message.
-        Employee employee = Employee.builder()
-                .firstName("")
-                .lastName("Person")
-                .dateOfBirth("1990-01-01")
-                .contactInfo(TestDataFactory.blankContactInfo(TestDataFactory.uniqueEmail("empty", "first")))
-                .build();
-
-        Response response = api.createEmployee(token, employee);
-
-        assertThat("an empty first name must be rejected", response.statusCode(), is(400));
-        assertThat("body should explain the minimum-length rule",
-                response.jsonPath().getString("message"),
-                equalTo("First name must be at least 2 characters long."));
-
         extractEmployeeId(response).ifPresent(createdIds::add);
     }
 
