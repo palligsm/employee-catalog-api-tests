@@ -51,6 +51,24 @@ but implied by BR-4 and REST conventions, and therefore tested:
 | FR-10 | **High** | The **unique-email** constraint must also hold on **update**. A `PUT /employees/{id}` that changes `contactInfo.email` to a value already used by **another** employee must be rejected — ideally **409 Conflict**, or **400** for consistency with `POST` (FR-2) — and must **not** modify data or crash the service. Re-sending an employee's **own** existing email (unchanged) must still succeed with **200**. |
 | FR-11 | Medium | `firstName` / `lastName` are **not** unique keys. Two employees may share the same name, so creating or updating an employee to a name that already exists is **valid** and must succeed (not treated as a duplicate/conflict). Only `contactInfo.email` is unique. |
 
+### 2.1 `POST /employees` — response code matrix
+
+The expected status code for each request scenario. **Note:** `POST` creates a
+resource, so success is **`201 Created`, not `200`** — the only `200` in this API
+is for `POST /hr/login`, `GET`, `PUT` and `DELETE`.
+
+| Scenario | Expected | Meaning |
+|----------|:--------:|---------|
+| Valid body, **new unique** email | **201 Created** | Employee created; returns `{ message, employeeId, firstName, lastName, email }`. |
+| Valid body, **duplicate** email (already in use) | **400 Bad Request** | Rejected — unique-email constraint; body identifies `contactInfo.email`. *(Ideally `409 Conflict`; the API uses `400`.)* |
+| Missing a **required** field (`firstName` / `lastName` / `dateOfBirth` / `contactInfo.email`) | **400 Bad Request** | Validation failure — must be a clean 4xx. *(Live host currently crashes with `5xx` — see [FINDINGS #5](FINDINGS.md).)* |
+| Empty body `{}` | **400 Bad Request** | As above. *(Live host currently crashes — FINDINGS #5.)* |
+| **No** `Authorization` header | **401 Unauthorized** | Token missing (FR-7 / BR-4). |
+| **Invalid / malformed** token | **401 / 403** | Token present but not valid. |
+
+> Success is **`201`**; a duplicate email is a **rejection (`400`)**, not a
+> success. A `200` is never a valid outcome of `POST /employees`.
+
 ---
 
 ## 3. Data model requirements
