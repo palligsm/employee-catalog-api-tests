@@ -1,5 +1,6 @@
 package com.dwp.employeecatalog.tests;
 
+import com.dwp.employeecatalog.model.Address;
 import com.dwp.employeecatalog.model.ContactInfo;
 import com.dwp.employeecatalog.model.Employee;
 import com.dwp.employeecatalog.util.TestDataFactory;
@@ -130,62 +131,61 @@ class CreateEmployeeTests extends BaseTest {
                 allOf(containsString(dupEmail), containsString("already in use")));
     }
 
-    // DISABLED — DO NOT DELETE. This test sends a malformed payload (missing
-    // required field). The live service has a defect (FINDINGS #5) where invalid
-    // input throws an unhandled error that CRASHES the single free-tier instance,
-    // taking the API *and* the /api-docs UI down until Render restarts it.
-    // Kept for when the API is fixed / run against a local build; disabled for now
-    // so the suite doesn't take the shared host down.
-    @Disabled("Crashes the live free-tier host (invalid input -> unhandled 5xx). See FINDINGS #5.")
     @Test
     @DisplayName("missing required field (lastName) is rejected, not 201")
     void missingRequiredField_isRejected() {
-        // Build a body deliberately missing the required lastName.
+        // Full body EXCEPT the required lastName. Blank optional contact fields are
+        // supplied so we hit the lastName validation, not the crash-on-absent-
+        // nested-field defect (FINDINGS #8).
         Employee employee = Employee.builder()
                 .firstName("NoLastName")
                 .dateOfBirth("1990-01-01")
                 .contactInfo(new ContactInfo(
-                        TestDataFactory.uniqueEmail("no", "last"), null, null))
+                        TestDataFactory.uniqueEmail("no", "last"), "", new Address("", "", "")))
                 .build();
 
-        // No-retry: an invalid payload can crash the fragile free-tier host
-        // (FINDINGS #5); retrying would only re-trigger the crash. We send once.
-        Response response = api.createEmployeeNoRetry(token, employee);
+        Response response = api.createEmployee(token, employee);
 
-        // A well-behaved API should reject this with a 4xx (ideally 400).
+        // Must not be created. NOTE: the live API returns 500 with a validation
+        // message ("...lastName ... is required") rather than the correct 400 —
+        // a handled-but-wrong status (see FINDINGS #5).
         assertThat("creating without a required field must not succeed with 201",
                 response.statusCode(), is(not(201)));
+        assertThat("error should name the missing required field (lastName)",
+                response.jsonPath().getString("error"),
+                allOf(containsString("lastName"), containsString("required")));
 
         // Guard against silent success: if it somehow created, clean it up.
         extractEmployeeId(response).ifPresent(createdIds::add);
     }
 
-    // DISABLED — DO NOT DELETE. Malformed payload (missing required email); may
-    // crash the live free-tier host (unhandled 5xx on invalid input, FINDINGS #5),
-    // taking the API + /api-docs UI down. Re-enable against a fixed / local API.
-    @Disabled("Crashes the live free-tier host (invalid input -> unhandled 5xx). See FINDINGS #5.")
     @Test
     @DisplayName("missing contactInfo.email is rejected, not 201")
     void missingEmail_isRejected() {
+        // Full body EXCEPT the required email (blank phone/address supplied).
         Employee employee = Employee.builder()
                 .firstName("NoEmail")
                 .lastName("Person")
                 .dateOfBirth("1990-01-01")
-                .contactInfo(new ContactInfo(null, "+441234567890", null))
+                .contactInfo(new ContactInfo(null, "", new Address("", "", "")))
                 .build();
 
-        // No-retry: see missingRequiredField_isRejected.
-        Response response = api.createEmployeeNoRetry(token, employee);
+        Response response = api.createEmployee(token, employee);
 
         assertThat("creating without the required email must not succeed with 201",
                 response.statusCode(), is(not(201)));
+        assertThat("error should name the missing required field (email)",
+                response.jsonPath().getString("error"),
+                allOf(containsString("email"), containsString("required")));
         extractEmployeeId(response).ifPresent(createdIds::add);
     }
 
-    // DISABLED — DO NOT DELETE. Empty body +++++{} may crash the live free-tier host
-    // (unhandled 5xx on invalid input, FINDINGS #5), taking the API + /api-docs UI
-    // down. Re-enable against a fixed / local API.
-    @Disabled("Crashes the live free-tier host (invalid input -> unhandled 5xx). See FINDINGS #5.")
+    // DISABLED — DO NOT DELETE. An empty body {} has no contactInfo object at all,
+    // which triggers the crash-on-absent-nested-field defect (502, FINDINGS #5/#8)
+    // and takes the shared host + /api-docs UI down. Unlike the missing-single-field
+    // cases above (which return a handled 500), this one still crashes, so it stays
+    // disabled. Re-enable against a fixed / local API.
+    @Disabled("Empty body crashes the live free-tier host (502, absent contactInfo). See FINDINGS #5/#8.")
     @Test
     @DisplayName("empty JSON body is rejected, not 201")
     void emptyBody_isRejected() {
