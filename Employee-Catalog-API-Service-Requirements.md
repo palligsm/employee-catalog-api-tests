@@ -48,6 +48,8 @@ but implied by BR-4 and REST conventions, and therefore tested:
 | FR-7 | **High** | `POST`, `GET /employees`, `GET/PUT/DELETE /employees/{id}` must reject a **missing or invalid** token with **401** (BR-4). |
 | FR-8 | Medium | After a successful `DELETE`, a subsequent `GET /employees/{id}` for the same id must return **404** (BR-6 — the record is gone). |
 | FR-9 | Medium | An employee created via `POST` must subsequently appear in `GET /employees` and be retrievable via `GET /employees/{id}`. |
+| FR-10 | **High** | The **unique-email** constraint must also hold on **update**. A `PUT /employees/{id}` that changes `contactInfo.email` to a value already used by **another** employee must be rejected — ideally **409 Conflict**, or **400** for consistency with `POST` (FR-2) — and must **not** modify data or crash the service. Re-sending an employee's **own** existing email (unchanged) must still succeed with **200**. |
+| FR-11 | Medium | `firstName` / `lastName` are **not** unique keys. Two employees may share the same name, so creating or updating an employee to a name that already exists is **valid** and must succeed (not treated as a duplicate/conflict). Only `contactInfo.email` is unique. |
 
 ---
 
@@ -66,7 +68,7 @@ but implied by BR-4 and REST conventions, and therefore tested:
 | `lastName` | string | ✅ | |
 | `dateOfBirth` | string (`date`, `YYYY-MM-DD`) | ✅ | |
 | `contactInfo` | object | ✅ | |
-| `contactInfo.email` | string (`email`) | ✅ | Must be **unique** (duplicate → 400, FR-2). |
+| `contactInfo.email` | string (`email`) | ✅ | Must be **unique** across all employees, enforced on **both create and update** (duplicate → 400 on `POST` per FR-2; should be 409/400 on `PUT` per FR-10). |
 | `contactInfo.phone` | string | ❌ | |
 | `contactInfo.address` | object | ❌ | |
 | `contactInfo.address.street` | string | ❌ | |
@@ -128,6 +130,8 @@ Where each requirement is exercised in this suite.
 | FR-3, FR-9 (list + created appears) | `GetAllEmployeesTests` |
 | FR-4 (get by id) | `GetEmployeeByIdTests` |
 | FR-5 (amend) | `UpdateEmployeeTests` |
+| FR-10 (unique email on update) | Documented in FINDINGS — a duplicate-email `PUT` currently **crashes** the live host instead of returning 409/400; an automated test is parked until the API is fixed / run locally (would take the shared host down). |
+| FR-11 (names not unique) | Implicitly upheld — create/update tests use employees that may share names and still expect success; observed `PUT` with a duplicate first name returns 200. |
 | FR-6, FR-8, BR-6 (delete + gone) | `DeleteEmployeeTests` |
 | BR-5, G-6 (end-to-end journey) | `EmployeeLifecycleJourneyTest` |
 | G-2 (assertions) | all test classes |
