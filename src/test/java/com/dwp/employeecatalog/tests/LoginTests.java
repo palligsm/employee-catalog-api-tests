@@ -122,16 +122,16 @@ class LoginTests extends BaseTest {
     }
 
     @Test
-    @DisplayName("valid username + null password is rejected (no token)")
+    @DisplayName("valid username + null password returns 500 (defect) and issues no token")
     void validUsername_nullPassword_isRejected() {
         Response response = api.login(ConfigManager.adminUsername(), null);
 
-        // Must not authenticate. NOTE: the live API returns 500
-        // ("An error occurred during login") for a null password instead of a
-        // clean 401/400 — an unhandled-input defect (see FINDINGS). We assert the
-        // security-critical fact (no token issued) so the suite stays green while
-        // the defect is captured in FINDINGS.
-        assertRejected(response);
+        // The live API mishandles a null password: instead of a clean 401/400 it
+        // returns 500 "An error occurred during login" (see FINDINGS #10). This is
+        // a characterization test that pins the current behaviour AND asserts the
+        // security-critical fact that no token is issued. When the API is fixed to
+        // reject null credentials with 401, switch this to assertRejectedWith401.
+        assertRejectedWith500(response);
     }
 
     // ---------------------------------------------------------------------
@@ -151,9 +151,16 @@ class LoginTests extends BaseTest {
     // Helpers
     // ---------------------------------------------------------------------
 
-    /** A login attempt must not succeed: no 200, and no token in the body. */
-    private static void assertRejected(Response response) {
-        assertThat("bad credentials must not return 200", response.statusCode(), is(not(200)));
+    /**
+     * Asserts the (defective) 500 response the live API currently returns for a
+     * null password: status 500, the {@code error} message, and no token. See
+     * FINDINGS #10 — the correct behaviour would be a 401/400.
+     */
+    private static void assertRejectedWith500(Response response) {
+        assertThat("null credential currently returns 500 (defect, FINDINGS #10)",
+                response.statusCode(), is(500));
+        assertThat("500 body should carry the login-error message",
+                response.jsonPath().getString("error"), equalTo("An error occurred during login"));
         assertThat("no token may be leaked on a failed login",
                 response.jsonPath().getString("token"), is(emptyOrNullString()));
     }
