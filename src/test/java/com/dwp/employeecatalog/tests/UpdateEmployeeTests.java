@@ -12,7 +12,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 /**
- * Tests for {@code PUT /employees/{id}}.
+ * Verifies the <b>update employee</b> endpoint, {@code PUT /employees/{id}}.
+ *
+ * <p><b>Purpose:</b> confirm that amending an existing employee returns 200 and
+ * the change is actually persisted (read back via GET), and that updating an
+ * unknown id returns 404. Updates deliberately send a <em>complete</em> valid
+ * body, because a partial body would omit required fields and trigger the
+ * server's crash-on-invalid-input defect (see FINDINGS #5).</p>
  */
 @DisplayName("PUT /employees/{id} - update employee")
 class UpdateEmployeeTests extends BaseTest {

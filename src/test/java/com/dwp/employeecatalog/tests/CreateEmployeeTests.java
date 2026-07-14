@@ -23,7 +23,19 @@ import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.startsWith;
 
 /**
- * Tests for {@code POST /employees}.
+ * Verifies the <b>create employee</b> endpoint, {@code POST /employees}.
+ *
+ * <p><b>Purpose:</b> confirm that a valid, authenticated request creates an
+ * employee (HTTP 201 with a generated {@code Emp-} id and the submitted data
+ * echoed back), and that invalid requests are rejected — duplicate email (400),
+ * missing required fields, and an empty body.</p>
+ *
+ * <p>Several negative tests are {@link org.junit.jupiter.api.Disabled} against
+ * the live host because the service crashes on invalid input (see FINDINGS #5/#8);
+ * they are retained to run against a fixed or local API, and use
+ * {@code createEmployeeNoRetry} so a single bad request can't be retried into a
+ * sustained outage. Employees created here are removed in {@link #cleanUp()} so
+ * runs stay independent and the shared catalog stays tidy.</p>
  */
 @DisplayName("POST /employees - create employee")
 class CreateEmployeeTests extends BaseTest {
@@ -161,7 +173,7 @@ class CreateEmployeeTests extends BaseTest {
         extractEmployeeId(response).ifPresent(createdIds::add);
     }
 
-    // DISABLED — DO NOT DELETE. Empty body {} may crash the live free-tier host
+    // DISABLED — DO NOT DELETE. Empty body +++++{} may crash the live free-tier host
     // (unhandled 5xx on invalid input, FINDINGS #5), taking the API + /api-docs UI
     // down. Re-enable against a fixed / local API.
     @Disabled("Crashes the live free-tier host (invalid input -> unhandled 5xx). See FINDINGS #5.")

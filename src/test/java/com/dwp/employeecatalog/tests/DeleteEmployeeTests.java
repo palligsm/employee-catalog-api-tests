@@ -9,7 +9,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 /**
- * Tests for {@code DELETE /employees/{id}}.
+ * Verifies the <b>delete employee</b> endpoint, {@code DELETE /employees/{id}}.
+ *
+ * <p><b>Purpose:</b> confirm that deleting an existing employee returns 200 and
+ * the record is genuinely gone (a follow-up GET returns 404 — this represents an
+ * employee leaving the organisation), and that deleting an unknown id returns
+ * 404.</p>
  */
 @DisplayName("DELETE /employees/{id} - remove employee")
 class DeleteEmployeeTests extends BaseTest {

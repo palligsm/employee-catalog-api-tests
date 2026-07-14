@@ -4,7 +4,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
- * Postal address, nested inside {@link ContactInfo}.
+ * Data model (POJO) for an employee's postal address.
+ *
+ * <p><b>Purpose:</b> mirrors the {@code contactInfo.address} object in the API's
+ * employee JSON. Jackson serialises it into request bodies and deserialises it
+ * from responses. Nested inside {@link ContactInfo}.</p>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)

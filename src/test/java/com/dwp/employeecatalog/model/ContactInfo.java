@@ -4,7 +4,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
- * Contact details for an {@link Employee}. Only {@code email} is required by the API.
+ * Data model (POJO) for an employee's contact details: {@code email},
+ * {@code phone} and {@code address}.
+ *
+ * <p><b>Purpose:</b> mirrors the {@code contactInfo} block of the API's employee
+ * JSON. Only {@code email} is required by the API; the optional fields are
+ * omitted from the request when {@code null}. Nested inside {@link Employee}.</p>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)

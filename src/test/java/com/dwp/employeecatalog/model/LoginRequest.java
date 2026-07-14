@@ -1,7 +1,11 @@
 package com.dwp.employeecatalog.model;
 
 /**
- * Request body for {@code POST /hr/login}.
+ * Data model (POJO) for the {@code POST /hr/login} request body:
+ * {@code username} + {@code password}.
+ *
+ * <p><b>Purpose:</b> serialised by Jackson into the JSON sent when an HR admin
+ * authenticates. Consumed by {@code EmployeeCatalogClient#login}.</p>
  */
 public class LoginRequest {
 

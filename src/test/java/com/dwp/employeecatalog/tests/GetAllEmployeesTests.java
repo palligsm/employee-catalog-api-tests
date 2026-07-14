@@ -16,7 +16,11 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 /**
- * Tests for {@code GET /employees}.
+ * Verifies the <b>list employees</b> endpoint, {@code GET /employees}.
+ *
+ * <p><b>Purpose:</b> confirm that an authenticated request returns 200 with a
+ * JSON array, that every entry carries an {@code employeeId}, and that a freshly
+ * created employee appears in the full catalog.</p>
  */
 @DisplayName("GET /employees - list all employees")
 class GetAllEmployeesTests extends BaseTest {

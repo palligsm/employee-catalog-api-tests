@@ -11,7 +11,11 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 /**
- * Tests for {@code GET /employees/{id}}.
+ * Verifies the <b>get-one employee</b> endpoint, {@code GET /employees/{id}}.
+ *
+ * <p><b>Purpose:</b> confirm that an existing id returns 200 with the matching
+ * employee (including the email we stored), and that an unknown id returns
+ * 404.</p>
  */
 @DisplayName("GET /employees/{id} - retrieve one employee")
 class GetEmployeeByIdTests extends BaseTest {
