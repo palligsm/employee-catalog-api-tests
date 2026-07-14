@@ -99,21 +99,6 @@ class CreateEmployeeTests extends BaseTest {
     }
 
     @Test
-    @DisplayName("minimal payload (required fields + blank optional contact fields) is accepted (201)")
-    void minimalPayload_isAccepted() {
-        // Real first/last name + unique email, with the optional phone/address
-        // sent as blank strings "". The host crashes if those nested keys are
-        // OMITTED (FINDINGS #8) but accepts them present-but-empty, so this is
-        // the smallest body the live service will actually create.
-        Employee employee = TestDataFactory.minimalValidEmployee();
-
-        Response response = api.createEmployee(token, employee);
-
-        assertThat(response.statusCode(), is(201));
-        createdIds.add(response.jsonPath().getString("employeeId"));
-    }
-
-    @Test
     @DisplayName("duplicate email is rejected with HTTP 400")
     void duplicateEmail_isRejected() {
         Employee first = TestDataFactory.validEmployee();
@@ -165,6 +150,21 @@ class CreateEmployeeTests extends BaseTest {
                 response.statusCode(), is(201));
         assertThat("the second employee keeps the shared first name",
                 response.jsonPath().getString("firstName"), equalTo(sharedFirstName));
+        createdIds.add(response.jsonPath().getString("employeeId"));
+    }
+
+    @Test
+    @DisplayName("minimal payload (required fields + blank optional contact fields) is accepted (201)")
+    void minimalPayload_isAccepted() {
+        // Real first/last name + unique email, with the optional phone/address
+        // sent as blank strings "". The host crashes if those nested keys are
+        // OMITTED (FINDINGS #8) but accepts them present-but-empty, so this is
+        // the smallest body the live service will actually create.
+        Employee employee = TestDataFactory.minimalValidEmployee();
+
+        Response response = api.createEmployee(token, employee);
+
+        assertThat(response.statusCode(), is(201));
         createdIds.add(response.jsonPath().getString("employeeId"));
     }
 
